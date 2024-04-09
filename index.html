@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe - Arcade Edition</title>
+<style>
+    body {
+        font-family: 'Press Start 2P', cursive;
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        color: #fff;
+    }
+    .title {
+        text-align: center;
+        font-size: 2em;
+        padding: 20px 0;
+    }
+    .scoreboard {
+        background-color: #333;
+        padding: 10px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: fit-content;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 999;
+        margin: auto;
+    }
+    .score {
+        font-size: 1.5em;
+        text-align: center;
+    }
+    .score strong {
+        font-weight: bold;
+    }
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        max-width: 300px;
+        margin: 20px auto 0;
+    }
+    .cell {
+        width: 100px;
+        height: 100px;
+        background-color: #555;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2em;
+        cursor: pointer;
+        border: 5px solid #333;
+    }
+    .cell:hover {
+        background-color: #777;
+    }
+    .winner {
+        font-size: 1.5em;
+        text-align: center;
+        margin-top: 20px;
+    }
+    .reset-button, .reset-score-button {
+        display: block;
+        margin: 10px auto;
+        padding: 10px 20px;
+        font-size: 1em;
+        border: none;
+        cursor: pointer;
+        width: fit-content;
+        border-radius: 5px;
+        font-family: 'Press Start 2P', cursive;
+        background-color: #FF5733;
+        color: #fff;
+    }
+    .reset-button {
+        background-color: #4CAF50;
+        color: #fff;
+    }
+    .highlight {
+        font-weight: bold;
+    }
+    .highlight-X {
+        color: green;
+    }
+    .highlight-O {
+        color: red;
+    }
+    .choose-first {
+        text-align: center;
+        margin-bottom: 10px;
+        display: none;
+    }
+    .choose-first button {
+        margin: 5px;
+        padding: 5px 10px;
+        font-size: 1em;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        background-color: #FF5733;
+        color: #fff;
+    }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="title">Tic Tac Toe - Arcade Edition</div>
+<div class="scoreboard">
+    <div class="score">
+        <strong>Score</strong>
+        <div class="score-X">X <span>0</span></div>
+        <div class="score-O">O <span>0</span></div>
+    </div>
+</div>
+<div class="choose-first">
+    Choose who goes first:
+    <button class="first-X">X</button>
+    <button class="first-O">O</button>
+</div>
+<div class="board"></div>
+<div class="winner"></div>
+<button class="reset-button">Reset Game</button>
+<button class="reset-score-button">Reset Score</button>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const board = document.querySelector('.board');
+        const winnerDisplay = document.querySelector('.winner');
+        const resetButton = document.querySelector('.reset-button');
+        const resetScoreButton = document.querySelector('.reset-score-button');
+        const scoreXDisplay = document.querySelector('.score-X span');
+        const scoreODisplay = document.querySelector('.score-O span');
+        const firstXButton = document.querySelector('.first-X');
+        const firstOButton = document.querySelector('.first-O');
+        let currentPlayer = 'X';
+        let winner = null;
+        let scoreX = 0;
+        let scoreO = 0;
+        let firstPlayer = 'X';
+        const cells = [];
+        let gameStarted = false;
+
+        // Create cells
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.index = i;
+            cell.addEventListener('click', () => {
+                if (!cell.textContent && !winner) {
+                    cell.textContent = currentPlayer;
+                    checkWinner();
+                    togglePlayer();
+                    gameStarted = true;
+                    hideChooseFirst();
+                }
+            });
+            board.appendChild(cell);
+            cells.push(cell);
+        }
+
+        // Winning combinations
+        const winCombos = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        // Check for winner
+        function checkWinner() {
+            for (let combo of winCombos) {
+                const [a, b, c] = combo;
+                if (cells[a].textContent && cells[a].textContent === cells[b].textContent && cells[a].textContent === cells[c].textContent) {
+                    winner = cells[a].textContent;
+                    winnerDisplay.textContent = `${winner} wins!`;
+                    updateScore();
+                    return;
+                }
+            }
+            if (![...cells].some(cell => !cell.textContent)) {
+                winnerDisplay.textContent = "It's a draw!";
+            }
+        }
+
+        // Update score
+        function updateScore() {
+            if (winner === 'X') {
+                scoreX++;
+                scoreXDisplay.textContent = scoreX;
+            } else if (winner === 'O') {
+                scoreO++;
+                scoreODisplay.textContent = scoreO;
+            }
+            highlightScores();
+        }
+
+        // Highlight scores
+        function highlightScores() {
+            scoreXDisplay.classList.remove('highlight', 'highlight-X', 'highlight-O');
+            scoreODisplay.classList.remove('highlight', 'highlight-X', 'highlight-O');
+
+            if (scoreX > scoreO) {
+                scoreXDisplay.classList.add('highlight', 'highlight-X');
+                scoreODisplay.classList.add('highlight', 'highlight-O');
+            } else if (scoreO > scoreX) {
+                scoreXDisplay.classList.add('highlight', 'highlight-O');
+                scoreODisplay.classList.add('highlight', 'highlight-X');
+            }
+        }
+
+        // Reset game
+        function resetGame() {
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.style.backgroundColor = '#555';
+            });
+            winnerDisplay.textContent = '';
+            winner = null;
+            currentPlayer = firstPlayer;
+            gameStarted = false;
+            showChooseFirst();
+        }
+
+        // Reset score
+        function resetScore() {
+            scoreX = 0;
+            scoreO = 0;
+            scoreXDisplay.textContent = scoreX;
+            scoreODisplay.textContent = scoreO;
+            highlightScores();
+        }
+
+        // Toggle player
+        function togglePlayer() {
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        }
+
+        // Event listener for reset buttons
+        resetButton.addEventListener('click', resetGame);
+        resetScoreButton.addEventListener('click', resetScore);
+
+        // Event listener for choosing first player
+        firstXButton.addEventListener('click', () => {
+            firstPlayer = 'X';
+            currentPlayer = 'X';
+            resetGame();
+        });
+        firstOButton.addEventListener('click', () => {
+            firstPlayer = 'O';
+            currentPlayer = 'O';
+            resetGame();
+        });
+
+        function showChooseFirst() {
+            if (!gameStarted) {
+                document.querySelector('.choose-first').style.display = 'block';
+            }
+        }
+
+        function hideChooseFirst() {
+            document.querySelector('.choose-first').style.display = 'none';
+        }
+
+        showChooseFirst();
+    });
+</script>
+</body>
+</html>
